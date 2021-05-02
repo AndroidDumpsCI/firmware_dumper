@@ -240,14 +240,15 @@ if [[ -n "$TG_TOKEN" ]]; then
         commit_head=$(git log --format=format:%H | head -n 1)
         commit_link="https://github.com/$ORG/$repo/commit/$commit_head"
         echo -e "Sending telegram notification"
-        printf "<b>Brand: %s</b>" "$brand" >| "$PROJECT_DIR"/working/tg.html
+        printf "<b>Brand:</b> #%s" "$brand" >| "$PROJECT_DIR"/working/tg.html
         {
-            printf "\n<b>Device: %s</b>" "$codename"
-            printf "\n<b>Version:</b> %s" "$release"
-            printf "\n<b>Fingerprint:</b> %s" "$fingerprint"
+            printf "\n<b>Device:</b> #%s" "$codename"
+            printf "\n<b>Version:</b> <code>%s</code>" "$release"
+            printf "\n<b>Fingerprint:</b> <code>%s</code>" "$fingerprint"
             printf "\n<b>GitHub:</b>"
-            printf "\n<a href=\"%s\">Commit</a>" "$commit_link"
-            printf "\n<a href=\"https://github.com/%s/%s/tree/%s/\">%s</a>" "$ORG" "$repo" "$branch" "$codename"
+            printf "\n - <a href=\"%s\">Commit</a>" "$commit_link"
+            printf "\n - <a href=\"https://github.com/%s/%s/tree/%s/\">%s</a>" "$ORG" "$repo" "$branch" "$codename"
+            printf "\n\n<b>Follow:</b> @AndroidDumpsCI"
         } >> "$PROJECT_DIR"/working/tg.html
         TEXT=$(< "$PROJECT_DIR"/working/tg.html)
         curl -s "https://api.telegram.org/bot${TG_TOKEN}/sendmessage" --data "text=${TEXT}&chat_id=${CHAT_ID}&parse_mode=HTML&disable_web_page_preview=True" > /dev/null
