@@ -2,6 +2,11 @@
 
 [[ $# = 0 ]] && echo "No Input" && exit 1
 
+OS=`uname`
+if [ "$OS" = 'Darwin' ]; then
+    export LC_CTYPE=C
+fi
+
 PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null && pwd )"
 # Create input & working directory if it does not exist
 mkdir -p "$PROJECT_DIR"/input "$PROJECT_DIR"/working
@@ -106,7 +111,21 @@ for p in $PARTITIONS; do
         mkdir "$p" 2> /dev/null || rm -rf "${p:?}"/*
         echo "Extracting $p partition"
         7z x "$p".img -y -o"$p"/ > /dev/null 2>&1
-        rm "$p".img > /dev/null 2>&1
+        if [ $? -eq 0 ]; then
+            rm "$p".img > /dev/null 2>&1
+        else
+        #handling erofs images, which can't be handled by 7z
+            if [ -f $p.img ] && [ $p != "modem" ]; then
+                echo "Couldn't extract $p partition by 7z. Using fsck.erofs."
+                rm -rf "${p}"/*
+                "$PROJECT_DIR"/Firmware_extractor/tools/Linux/bin/fsck.erofs --extract="$p" "$p".img
+                if [ $? -eq 0 ]; then
+                    rm -fv "$p".img > /dev/null 2>&1
+                else
+                    echo "Couldn't extract $p partition. It might use an unsupported filesystem. For EROFS: make sure you're using Linux 5.4+ kernel"
+                fi
+            fi
+        fi
     fi
 done
 
